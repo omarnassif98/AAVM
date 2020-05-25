@@ -32,7 +32,7 @@ class Application(tk.Frame):
         self.tagEntry.pack(pady =10)
         self.Advance = tk.Button(self, text="Validate", fg="green", command=lambda: self.authenticateTag(self.tagEntry.get()))
         self.Advance.pack(pady= 15)
-        self.quitButton = tk.Button(self, text="QUIT", fg="red", command=self.quit)
+        self.quitButton = tk.Button(self, text="QUIT", fg="red", command=self.master.destroy)
         self.quitButton.pack(pady =5)
 #The change to the main window after the tag is checked
     def authenticateTag(self, tag):
@@ -50,7 +50,7 @@ class Application(tk.Frame):
         self.hashtagLabel.pack(pady= 100)
         self.queueLabel = tk.Label(self, text="Give it a second...", font=altFont)
         self.queueLabel.pack(pady= 50)
-        self.quitButton = tk.Button(self, text="QUIT", fg="red", command=self.quit)
+        self.quitButton = tk.Button(self, text="QUIT", fg="red", command=self.master.destroy)
         self.quitButton.pack()
         '''
         The scraper and printer are both initialized from this function
@@ -69,11 +69,9 @@ class Application(tk.Frame):
 #changes queueLabel text as photos come in/are printed
     def Increment(self, newVal):
         self.queueLabel['text'] = str(newVal) + ' posts being printed, GET POSTING!'
-    def quit(self):
-        global threadsRunning
-        threadsRunning = False
-        print('peace')
-        self.master.destroy()
+
+    def alive(self):
+        return True
 
 
 #Downloads photo and stores it as a PIL Image
@@ -129,15 +127,18 @@ The GUI is updated to reflect this
 '''
 def InstaPrinter(_tag):
     global phrase
-    global threadsRunning
     app.Increment(0)
     phrase = 'HOW #' + _tag.upper() + ' IS THIS?'
-    while threadsRunning:
-        if len(photos) > 0:
-            print(str(len(photos)))
-            PrintPage(DownloadImageData(photos.popleft()))
-            app.Increment(len(photos))
- 
+    while True:
+        try:
+            heartbeat = app.alive()
+            if len(photos) > 0:
+                print(str(len(photos)))
+                PrintPage(DownloadImageData(photos.popleft()))
+                app.Increment(len(photos))
+        except:
+            break
+    print('killed printer')
 '''
 The first function in the scraping process
 A http get request downloads the html contents 
@@ -195,11 +196,14 @@ This function runs on its own thread
 Every 5 seconds, the two-part webscraping process happens
 '''
 def InstaScraper(_tag):
-    global threadsRunning
-    while threadsRunning:
-        Extract(Scrape(_tag))    
-        sleep(5)
-
+    while True:
+        try:
+            heartbeat = app.alive()
+            Extract(Scrape(_tag))    
+            sleep(5)
+        except:
+            break
+    print('killed scraper')
 
 '''
 This function happens prior to any webscraping
@@ -235,3 +239,4 @@ mainFont = tk.font.Font(family='Lucidia Grande', size = 25)
 altFont = tk.font.Font(family='Lucidia Grande', size = 15)
 app = Application(master=root)
 app.mainloop()
+threadsRunning = False
