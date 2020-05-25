@@ -212,8 +212,6 @@ Initializes scraper and printer functionality
 '''
 def Initialize(tag):
     global newestPhotoTimestamp
-    global threadsRunning
-    threadsRunning = True
     photoData = Scrape(tag)
     blurb = photoData[0]
     timestampStart = blurb.find('p":') + 3
@@ -226,7 +224,7 @@ def Initialize(tag):
 
 
 #Global variables
-threadsRunning = False 
+
 photos = deque()
 phrase = ''
 scraperThread = None
@@ -239,4 +237,3 @@ mainFont = tk.font.Font(family='Lucidia Grande', size = 25)
 altFont = tk.font.Font(family='Lucidia Grande', size = 15)
 app = Application(master=root)
 app.mainloop()
-threadsRunning = False
